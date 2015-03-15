@@ -98,6 +98,11 @@ int main(int argc, char *argv[])
   lodepng::save_file(file_buffer, argv[argc - 1]);
 
 
+  // De-initialize buffers.
+  file_buffer.clear();
+  output_image.clear();
+
+
   // All went well.
   return 0;
 }
