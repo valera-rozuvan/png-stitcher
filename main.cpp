@@ -46,55 +46,56 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-  vector<unsigned char> image, image3;
-  unsigned w, h, i, error;
-  vector<unsigned char> buffer, buffer3;
-  lodepng::State state;
+  unsigned width, height, error, i;
+  lodepng::State png_state;
+  vector<unsigned char> input_image, output_image, file_buffer;
 
 
   // Check if user gave at least 3 filenames as arguments to this program.
   // 2 files to stitch, and 1 file as the output.
   if (argc < 4) {
     cout << "Please provide at least 3 filenames." << endl;
+
     return 0;
   }
 
 
   // Configure PNG state options.
-  state.decoder.color_convert = 0;
+  png_state.decoder.color_convert = 0;
   // Make it reproduce even unknown chunks in the saved image.
-  state.decoder.remember_unknown_chunks = 1;
+  png_state.decoder.remember_unknown_chunks = 1;
 
 
   // Read all images to stitch together one by one, and append to master
   // output image.
   for (i = 1; i < static_cast<unsigned>(argc - 1); i += 1) {
-    lodepng::load_file(buffer, argv[i]);
-    error = lodepng::decode(image, w, h, state, buffer);
+    lodepng::load_file(file_buffer, argv[i]);
+    error = lodepng::decode(input_image, width, height, png_state, file_buffer);
     if (error) {
       cout << "[ERROR]: processing file " << i << " '" << argv[i] << "'." << endl;
       cout << "[decoder error " << error << "]: " << lodepng_error_text(error) << endl;
 
       return 0;
     }
-    buffer.clear();
+    file_buffer.clear();
 
-    image3.reserve( image3.size() + image.size() );
-    image3.insert( image3.end(), image.begin(), image.end() );
-    image.clear();
+    output_image.reserve(output_image.size() + input_image.size());
+    output_image.insert(output_image.end(), input_image.begin(), input_image.end());
+
+    input_image.clear();
   }
 
 
   // Write the stitched master output image to a file.
-  state.encoder.text_compression = 1;
-  error = lodepng::encode(buffer3, image3, w, (argc - 2) * h, state);
+  png_state.encoder.text_compression = 1;
+  error = lodepng::encode(file_buffer, output_image, width, (argc - 2) * height, png_state);
   if (error) {
     cout << "[ERROR]: saving file" << endl;
     cout << "[encoder error " << error << "]: " << lodepng_error_text(error) << endl;
 
     return 0;
   }
-  lodepng::save_file(buffer3, argv[argc - 1]);
+  lodepng::save_file(file_buffer, argv[argc - 1]);
 
 
   // All went well.
